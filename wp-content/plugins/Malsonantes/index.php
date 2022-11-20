@@ -27,16 +27,12 @@ function myplugin_bd_table() {
     $charset_collate = $wpdb->get_charset_collate();
 
     //le ponemos un prefijo a nuestra tabla
-    $table_name = $wpdb->prefix . 'wp';
+    $table_name = $wpdb->prefix . 'malsonantes';
 
     //indicamos la sentencia
     $sql = "CREATE TABLE $table_name (
-        id mediumint(9) NOT NULL AUTO_INCREMENT,
-        time datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
-        name tinytext NOT NULL,
-        text text NOT NULL,
-        url varchar(55) DEFAULT '' NOT NULL,
-        PRIMARY KEY (id)
+        mal varchar(20),
+        bien varchar(20)
     ) $charset_collate;";
 
     require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
