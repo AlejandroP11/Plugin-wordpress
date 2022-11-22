@@ -5,81 +5,101 @@ Plugin URI: http://www.jpereiro.org/
 Description: Experemintos de plugins
 Version: 1.0
 */
-/*
- * Remplaza las palabras malas por las buenas
+/**
+ * Reemplaza plabra
+ * @param $text el contenido del post
+ * @return array|string|string[] el contenido del post modificado
  */
-function malsonantes( $text ) {
-    $malas = array('malo', 'feo', 'tonto', 'idiota');
-
-    //Objeto para trabajar con la bd
+function renym_wordpress_typo_fix( $text ) {
+    // Objeto global del WordPress para trabajar con la BD
     global $wpdb;
 
-    //Buscamos la tabla por el nombre
-    $mitabla = $wpdb -> prefix."malsonantes";
+    // recojemos el
+    $charset_collate = $wpdb->get_charset_collate();
 
-    //Buscamos las palabras que esten relacionadas
-    //si no pasamos variables no hay que usar prepare
-    $buenas = $wpdb-> get_results($wpdb -> prepare("select * from $mitabla where mal = ($malas)"));
+    // le añado el prefijo a la tabla
+    $table_name = $wpdb->prefix . 'malsonantes';
+
+    // recogemos todos los datos de la tabla
+    // los metemos en un array asociativo, en vez de indices nnumericos,
+    // los indices son los nombres de las columnas de la tabla
+    $resultado = $wpdb->get_results("SELECT * FROM " . $table_name, ARRAY_A);
+
+    // creamos dos arrays vacias que contendran nuestras palabras
+    $malas = array();
+    $buenas = array();
+
+    // recorremos el resultado
+    foreach($resultado as $fila)
+    {
+        array_push($malas, $fila['malas']);
+        array_push($buenas, $fila['buenas']);
+    }
+
     return str_replace( $malas, $buenas, $text );
 }
 
-add_filter( 'the_content', 'malsonantes' );
+/**
+ * Añadimos la función renym_wordpress_typo_fix al filtro 'the_content'
+ * Se ejecutará cada vez que se cargue un post
+ */
+add_filter( 'the_content', 'renym_wordpress_typo_fix' );
 
-/*
- * Crea la tabla y la añade a la base de datos
+/**
+ * Añade un tabla a la BD
+ * @return void
  */
 
-function myplugin_bd_table() {
-    //Objeto para trabajar con la bd
+function myplugin_update_db_check() {
+
+    // Objeto global del WordPress para trabajar con la BD
     global $wpdb;
 
+    // recojemos el
     $charset_collate = $wpdb->get_charset_collate();
 
-    //le ponemos un prefijo a nuestra tabla
+    // le añado el prefijo a la tabla
     $table_name = $wpdb->prefix . 'malsonantes';
 
-    //indicamos la sentencia
+    // creamos la sentencia sql
     $sql = "CREATE TABLE IF NOT EXISTS $table_name (
-        mal varchar(20),
-        bien varchar(20),
-        primary key mal
+        id mediumint(9) NOT NULL AUTO_INCREMENT,
+        malas varchar (20),
+        buenas varchar (20),
+        PRIMARY KEY (id)
     ) $charset_collate;";
 
+    // libreria que necesito para usar la funcion dbDelta
     require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
     dbDelta( $sql );
-}
 
-/*
- * Ejecuta el plugin cuando este se carga
- */
-add_action( 'plugins_loaded', 'myplugin_bd_table' );
-
-/*
- * Añade el contenido a la tabla anteriormente creada
- */
-function myplugin_bd_content() {
-
-    //Objeto para trabajar con la bd
-    global $wpdb;
-
-    $charset_collate = $wpdb->get_charset_collate();
-
-    //Indicamos el nombre de nuestra tabla
-    $table_name = $wpdb->prefix . 'malsonantes';
-
-    //Creamos las dos arrays de los elementos que vamos a querer introducir en nuestra tabla
-    $malas = array('malo', 'feo', 'tonto', 'idiota');
-    $buenas = array('bueno', 'lindo', 'listo', 'inteligente');
-
-    //indicamos la sentencia
-    $sql = $wpdb -> prepare("INSERT INTO $table_name (mal, bien) VALUES ($malas, $buenas)") ;
+    // creamos los arrays que agregaremos a las tablas
+    $malo = array("caca", "culo", "pedo", "pis");
+    $bueno = array("popo", "trasero", "flatulencia", "orina");
+    $i = 0;
 
     require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
-    dbDelta( $sql );
+    // insertamos valores
+    foreach($malo as $mal){
+        $result = $wpdb->insert(
+            $table_name,
+            array(
+                'id' => $i,
+                'malas' => $mal,
+                'buenas' => $bueno[$i]
+            )
+        );
+        $i++;
+    }
+
+    error_log("Plugin DAM insert: " . $result);
+
+
+
 }
 
-/*
- * Ejecuta el plugin cuando este se carga
+/**
+ * Ejecuta 'myplugin_update_db_check', cuando el plugin se carga
  */
-add_action( 'plugins_loaded', 'myplugin_bd_content' );
+add_action( 'plugins_downloaded', 'myplugin_update_db_check' );
 
