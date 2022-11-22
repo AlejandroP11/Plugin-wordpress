@@ -32,6 +32,7 @@ function renym_wordpress_typo_fix( $text ) {
     // recorremos el resultado
     foreach($resultado as $fila)
     {
+        // añadimos las palabras en los arrays
         array_push($malas, $fila['malas']);
         array_push($buenas, $fila['buenas']);
     }
